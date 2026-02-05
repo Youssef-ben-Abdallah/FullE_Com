@@ -1,3 +1,5 @@
+using BI.Sales.Api.DTOs;
+using BI.Sales.Api.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -5,29 +7,60 @@ namespace BI.Sales.Api.Controllers;
 
 [ApiController]
 [Route("api/analytics")]
+[Authorize]
 public class AnalyticsController : ControllerBase
 {
-    [Authorize]
+    private readonly IAnalyticsRepository _analyticsRepository;
+
+    public AnalyticsController(IAnalyticsRepository analyticsRepository)
+    {
+        _analyticsRepository = analyticsRepository;
+    }
+
     [HttpGet("kpis")]
-    public IActionResult GetKpis() => Ok();
+    public async Task<ActionResult<KpiDto>> GetKpis()
+    {
+        var kpis = await _analyticsRepository.GetKpisAsync();
+        if (kpis == null)
+        {
+            return NotFound();
+        }
 
-    [Authorize]
+        return Ok(new KpiDto(kpis.TotalSales, kpis.TotalOrders, kpis.TotalCustomers, kpis.AvgOrderValue, kpis.AvgDiscount));
+    }
+
     [HttpGet("sales/time")]
-    public IActionResult GetSalesOverTime() => Ok();
+    public async Task<ActionResult<IEnumerable<SalesByPeriodDto>>> GetSalesByTime([FromQuery] string granularity = "day", [FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null)
+    {
+        var data = await _analyticsRepository.GetSalesByPeriodAsync(granularity, from, to);
+        return Ok(data.Select(d => new SalesByPeriodDto(d.PeriodDate, d.TotalSales)));
+    }
 
-    [Authorize]
     [HttpGet("top/products")]
-    public IActionResult GetTopProducts() => Ok();
+    public async Task<ActionResult<IEnumerable<TopEntityDto>>> GetTopProducts([FromQuery] int top = 10, [FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null)
+    {
+        var data = await _analyticsRepository.GetTopProductsAsync(top, from, to);
+        return Ok(data.Select(d => new TopEntityDto(d.Name, d.TotalSales)));
+    }
 
-    [Authorize]
     [HttpGet("top/customers")]
-    public IActionResult GetTopCustomers() => Ok();
+    public async Task<ActionResult<IEnumerable<TopEntityDto>>> GetTopCustomers([FromQuery] int top = 10, [FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null)
+    {
+        var data = await _analyticsRepository.GetTopCustomersAsync(top, from, to);
+        return Ok(data.Select(d => new TopEntityDto(d.Name, d.TotalSales)));
+    }
 
-    [Authorize]
     [HttpGet("by/territory")]
-    public IActionResult GetByTerritory() => Ok();
+    public async Task<ActionResult<IEnumerable<SalesByTerritoryDto>>> GetByTerritory([FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null)
+    {
+        var data = await _analyticsRepository.GetSalesByTerritoryAsync(from, to);
+        return Ok(data.Select(d => new SalesByTerritoryDto(d.Territory, d.TotalSales)));
+    }
 
-    [Authorize]
     [HttpGet("by/shipmethod")]
-    public IActionResult GetByShipMethod() => Ok();
+    public async Task<ActionResult<IEnumerable<SalesByShipMethodDto>>> GetByShipMethod([FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null)
+    {
+        var data = await _analyticsRepository.GetSalesByShipMethodAsync(from, to);
+        return Ok(data.Select(d => new SalesByShipMethodDto(d.ShipMethod, d.TotalSales)));
+    }
 }

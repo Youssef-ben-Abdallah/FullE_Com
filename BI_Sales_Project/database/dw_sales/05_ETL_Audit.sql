@@ -2,12 +2,12 @@ USE AdventureWorksDW_Sales;
 GO
 
 CREATE TABLE dbo.ETL_Audit (
-    AuditId bigint IDENTITY(1,1) PRIMARY KEY,
-    PackageName nvarchar(200) NOT NULL,
-    StartTime datetime2 NOT NULL,
-    EndTime datetime2 NULL,
-    RowsInserted int NULL,
-    RowsUpdated int NULL,
-    Status nvarchar(20) NOT NULL,
-    ErrorMessage nvarchar(max) NULL
+    AuditId BIGINT IDENTITY PRIMARY KEY,
+    PackageName NVARCHAR(200) NOT NULL,
+    StartTime DATETIME2 NOT NULL,
+    EndTime DATETIME2 NULL,
+    RowsInserted INT NOT NULL DEFAULT(0),
+    RowsUpdated INT NOT NULL DEFAULT(0),
+    Status NVARCHAR(20) NOT NULL,
+    ErrorMessage NVARCHAR(MAX) NULL
 );

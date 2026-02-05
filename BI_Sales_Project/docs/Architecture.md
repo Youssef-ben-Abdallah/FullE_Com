@@ -1,11 +1,20 @@
 # Architecture
 
-## Components
-- Angular frontend with modular feature areas (auth, catalog, admin, cart, orders, analytics).
-- ASP.NET Core Web API with Identity, JWT authentication, and repository/service layers.
-- OLTP database `OltpEcommerceDb` for transactional CRUD.
-- Data warehouse `AdventureWorksDW_Sales` for analytics only.
-- SSIS packages orchestrating stored procedure-driven ETL.
+## Overview
+- Angular 17+ frontend for e-commerce + analytics dashboard
+- ASP.NET Core Web API (.NET 8) with JWT authentication
+- OLTP database: `OltpEcommerceDb` (EF Core Code First)
+- Data Warehouse: `AdventureWorksDW_Sales` populated via SSIS
 
-## Data Separation
-The OLTP database never references the data warehouse. Analytics are served from DW views through a read-only context.
+## Contexts
+1. **OltpEcommerceDbContext**
+   - Identity tables
+   - Catalog, cart, order entities
+2. **DwSalesDbContext**
+   - Read-only view mappings
+   - Analytics endpoints only
+
+## Data Flow
+- OLTP is isolated from DW (no FK or direct dependency)
+- SSIS pulls from `AdventureWorks2019` and populates the DW
+- API reads from DW views for dashboard KPIs and trends

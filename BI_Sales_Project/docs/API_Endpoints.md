@@ -7,31 +7,29 @@
 
 ## Catalog
 - GET `/api/categories`
-- POST `/api/categories`
-- PUT `/api/categories/{id}`
-- DELETE `/api/categories/{id}`
+- POST `/api/categories` (Admin)
+- PUT `/api/categories/{id}` (Admin)
+- DELETE `/api/categories/{id}` (Admin)
 - GET `/api/categories/{id}/subcategories`
-- POST `/api/subcategories`
-- PUT `/api/subcategories/{id}`
-- DELETE `/api/subcategories/{id}`
+- POST `/api/subcategories` (Admin)
+- PUT `/api/subcategories/{id}` (Admin)
+- DELETE `/api/subcategories/{id}` (Admin)
 - GET `/api/products`
 - GET `/api/products/{id}`
-- POST `/api/products`
-- PUT `/api/products/{id}`
-- DELETE `/api/products/{id}`
+- POST `/api/products` (Admin)
+- PUT `/api/products/{id}` (Admin)
+- DELETE `/api/products/{id}` (Admin)
 
-## Cart
+## Cart & Orders
 - GET `/api/cart`
 - POST `/api/cart/items`
 - PUT `/api/cart/items/{itemId}`
 - DELETE `/api/cart/items/{itemId}`
 - POST `/api/cart/checkout`
-
-## Orders
 - GET `/api/orders/my`
 - GET `/api/orders/{id}`
-- GET `/api/admin/orders`
-- PUT `/api/admin/orders/{id}/status`
+- GET `/api/admin/orders` (Admin)
+- PUT `/api/admin/orders/{id}/status` (Admin)
 
 ## Analytics
 - GET `/api/analytics/kpis`

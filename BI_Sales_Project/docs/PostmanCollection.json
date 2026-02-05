@@ -8,11 +8,18 @@
       "name": "Auth Login",
       "request": {
         "method": "POST",
-        "header": [{"key": "Content-Type", "value": "application/json"}],
-        "url": {"raw": "{{baseUrl}}/api/auth/login"},
-        "body": {"mode": "raw", "raw": "{\"email\":\"admin@local\",\"password\":\"P@ssw0rd!\"}"}
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{baseUrl}}/api/auth/login",
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"admin@local\",\n  \"password\": \"P@ssw0rd!\"\n}" }
+      }
+    },
+    {
+      "name": "Get Categories",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{baseUrl}}/api/categories"
       }
     }
-  ],
-  "variable": [{"key": "baseUrl", "value": "https://localhost:5001"}]
+  ]
 }
