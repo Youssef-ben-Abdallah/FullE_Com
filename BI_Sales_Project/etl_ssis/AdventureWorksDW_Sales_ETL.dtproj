@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<Project xmlns="www.microsoft.com/SqlServer/IntegrationServices">
+  <Name>AdventureWorksDW_Sales_ETL</Name>
+  <DeploymentModel>Project</DeploymentModel>
+</Project>

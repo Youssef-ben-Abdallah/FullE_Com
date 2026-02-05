@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<DTS:Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts" DTS:ExecutableType="SSIS.Package">
+  <DTS:Property DTS:Name="PackageName">Placeholder</DTS:Property>
+</DTS:Executable>

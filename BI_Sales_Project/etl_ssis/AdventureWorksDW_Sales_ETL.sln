@@ -1,0 +1,15 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{159641D6-6404-4A2F-9B90-8CBAB40E0C6B}") = "AdventureWorksDW_Sales_ETL", "AdventureWorksDW_Sales_ETL.dtproj", "{B3F1BB9D-9E2D-4B06-AE32-27E0E86EDE52}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Default = Debug|Default
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B3F1BB9D-9E2D-4B06-AE32-27E0E86EDE52}.Debug|Default.ActiveCfg = Debug|Default
+	EndGlobalSection
+EndGlobal
