@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
-<DTS:Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts" DTS:ExecutableType="SSIS.Package">
-  <DTS:Property DTS:Name="PackageName">Placeholder</DTS:Property>
+<DTS:Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts">
+  <DTS:Property DTS:Name="ObjectName">02_LoadFactSalesOrderLine</DTS:Property>
+  <DTS:Property DTS:Name="Description">Placeholder SSIS package</DTS:Property>
 </DTS:Executable>

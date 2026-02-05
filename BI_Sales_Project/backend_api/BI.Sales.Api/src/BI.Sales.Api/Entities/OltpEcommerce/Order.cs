@@ -1,3 +1,5 @@
+using BI.Sales.Api.Security;
+
 namespace BI.Sales.Api.Entities.OltpEcommerce;
 
 public class Order
@@ -11,5 +13,6 @@ public class Order
     public decimal ShippingFee { get; set; }
     public decimal Total { get; set; }
     public string? Notes { get; set; }
+    public ApplicationUser? User { get; set; }
     public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
 }

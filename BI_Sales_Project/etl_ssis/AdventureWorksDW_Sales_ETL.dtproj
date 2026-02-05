@@ -1,5 +1,11 @@
 <?xml version="1.0"?>
-<Project xmlns="www.microsoft.com/SqlServer/IntegrationServices">
-  <Name>AdventureWorksDW_Sales_ETL</Name>
-  <DeploymentModel>Project</DeploymentModel>
+<Project Version="2.0" xmlns="www.microsoft.com/SqlServer/Dts">
+  <DtsProject>
+    <Packages>
+      <Package Name="00_PrepareDW"/>
+      <Package Name="01_LoadDimensions"/>
+      <Package Name="02_LoadFactSalesOrderLine"/>
+      <Package Name="99_Reconciliation"/>
+    </Packages>
+  </DtsProject>
 </Project>

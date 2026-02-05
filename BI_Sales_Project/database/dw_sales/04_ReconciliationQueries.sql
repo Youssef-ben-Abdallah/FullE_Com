@@ -1,8 +1,18 @@
 USE AdventureWorksDW_Sales;
 GO
 
-SELECT COUNT(*) AS SourceCount, SUM(LineTotal) AS SourceTotal
+-- Source counts
+SELECT COUNT(*) AS SourceRows
 FROM AdventureWorks2019.Sales.SalesOrderDetail;
 
-SELECT COUNT(*) AS DwCount, SUM(LineTotal) AS DwTotal
+-- DW counts
+SELECT COUNT(*) AS DwRows
+FROM dbo.FactSalesOrderLine;
+
+-- Source totals
+SELECT SUM(LineTotal) AS SourceTotal
+FROM AdventureWorks2019.Sales.SalesOrderDetail;
+
+-- DW totals
+SELECT SUM(LineTotal) AS DwTotal
 FROM dbo.FactSalesOrderLine;

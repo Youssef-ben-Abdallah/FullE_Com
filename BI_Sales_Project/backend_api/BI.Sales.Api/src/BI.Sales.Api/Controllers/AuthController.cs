@@ -1,5 +1,6 @@
+using BI.Sales.Api.DTOs;
+using BI.Sales.Api.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BI.Sales.Api.Controllers;
@@ -8,30 +9,44 @@ namespace BI.Sales.Api.Controllers;
 [Route("api/auth")]
 public class AuthController : ControllerBase
 {
-    private readonly UserManager<IdentityUser> _userManager;
+    private readonly AuthService _authService;
 
-    public AuthController(UserManager<IdentityUser> userManager)
+    public AuthController(AuthService authService)
     {
-        _userManager = userManager;
+        _authService = authService;
     }
 
-    [AllowAnonymous]
     [HttpPost("login")]
-    public IActionResult Login()
+    [AllowAnonymous]
+    public async Task<ActionResult<AuthResponse>> Login(LoginRequest request)
     {
-        return Ok(new { token = "sample-token" });
+        var response = await _authService.AuthenticateAsync(request);
+        if (response == null)
+        {
+            return Unauthorized();
+        }
+
+        return Ok(response);
     }
 
-    [AllowAnonymous]
     [HttpPost("register")]
-    public IActionResult Register()
+    [AllowAnonymous]
+    public async Task<IActionResult> Register(RegisterRequest request)
     {
+        var result = await _authService.RegisterAsync(request);
+        if (!result.Succeeded)
+        {
+            return BadRequest(result.Errors);
+        }
+
         return Ok();
     }
 
     [HttpPost("seed")]
-    public IActionResult Seed()
+    [AllowAnonymous]
+    public async Task<IActionResult> Seed()
     {
+        await _authService.SeedAsync();
         return Ok();
     }
 }

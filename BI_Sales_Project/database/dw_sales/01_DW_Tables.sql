@@ -2,107 +2,107 @@ USE AdventureWorksDW_Sales;
 GO
 
 CREATE TABLE dbo.DimDate (
-    DateKey int NOT NULL PRIMARY KEY,
-    FullDate date NOT NULL,
-    Year int NOT NULL,
-    Quarter int NOT NULL,
-    MonthNumber int NOT NULL,
-    MonthName nvarchar(20) NOT NULL,
-    DayOfMonth int NOT NULL,
-    DayName nvarchar(20) NOT NULL,
-    IsWeekend bit NOT NULL
+    DateKey INT PRIMARY KEY,
+    FullDate DATE NOT NULL,
+    Year INT NOT NULL,
+    Quarter INT NOT NULL,
+    MonthNumber INT NOT NULL,
+    MonthName NVARCHAR(20) NOT NULL,
+    DayOfMonth INT NOT NULL,
+    DayName NVARCHAR(20) NOT NULL,
+    IsWeekend BIT NOT NULL
 );
 
 CREATE TABLE dbo.DimProduct (
-    ProductKey int IDENTITY(1,1) PRIMARY KEY,
-    ProductID_BK int NOT NULL UNIQUE,
-    Name nvarchar(50) NOT NULL,
-    ProductNumber nvarchar(25) NOT NULL,
-    Color nvarchar(15) NULL,
-    StandardCost money NOT NULL,
-    ListPrice money NOT NULL,
-    Size nvarchar(5) NULL,
-    Weight decimal(8,2) NULL,
-    SellStartDate datetime NOT NULL,
-    SellEndDate datetime NULL,
-    DiscontinuedDate datetime NULL
+    ProductKey INT IDENTITY PRIMARY KEY,
+    ProductID_BK INT NOT NULL UNIQUE,
+    Name NVARCHAR(50) NOT NULL,
+    ProductNumber NVARCHAR(25) NOT NULL,
+    Color NVARCHAR(15) NULL,
+    StandardCost MONEY NOT NULL,
+    ListPrice MONEY NOT NULL,
+    Size NVARCHAR(5) NULL,
+    Weight DECIMAL(8,2) NULL,
+    SellStartDate DATETIME NOT NULL,
+    SellEndDate DATETIME NULL,
+    DiscontinuedDate DATETIME NULL
 );
 
 CREATE TABLE dbo.DimCustomer (
-    CustomerKey int IDENTITY(1,1) PRIMARY KEY,
-    CustomerID_BK int NOT NULL UNIQUE,
-    AccountNumber nvarchar(10) NOT NULL,
-    CustomerName nvarchar(200) NOT NULL,
-    PersonType nchar(2) NULL,
-    FirstName nvarchar(50) NULL,
-    LastName nvarchar(50) NULL,
-    TerritoryID_BK int NULL
+    CustomerKey INT IDENTITY PRIMARY KEY,
+    CustomerID_BK INT NOT NULL UNIQUE,
+    AccountNumber NVARCHAR(10) NOT NULL,
+    CustomerName NVARCHAR(200) NOT NULL,
+    PersonType NCHAR(2) NULL,
+    FirstName NVARCHAR(50) NULL,
+    LastName NVARCHAR(50) NULL,
+    TerritoryID_BK INT NULL
 );
 
 CREATE TABLE dbo.DimTerritory (
-    TerritoryKey int IDENTITY(1,1) PRIMARY KEY,
-    TerritoryID_BK int NOT NULL UNIQUE,
-    Name nvarchar(50) NOT NULL,
-    CountryRegionCode nvarchar(3) NOT NULL,
-    GroupName nvarchar(50) NOT NULL
+    TerritoryKey INT IDENTITY PRIMARY KEY,
+    TerritoryID_BK INT NOT NULL UNIQUE,
+    Name NVARCHAR(50) NOT NULL,
+    CountryRegionCode NVARCHAR(3) NOT NULL,
+    GroupName NVARCHAR(50) NOT NULL
 );
 
 CREATE TABLE dbo.DimSalesPerson (
-    SalesPersonKey int IDENTITY(1,1) PRIMARY KEY,
-    BusinessEntityID_BK int NOT NULL UNIQUE,
-    TerritoryID_BK int NULL,
-    FirstName nvarchar(50) NOT NULL,
-    LastName nvarchar(50) NOT NULL,
-    SalesQuota money NULL,
-    Bonus money NOT NULL,
-    CommissionPct smallmoney NOT NULL
+    SalesPersonKey INT IDENTITY PRIMARY KEY,
+    BusinessEntityID_BK INT NOT NULL UNIQUE,
+    TerritoryID_BK INT NULL,
+    FirstName NVARCHAR(50) NOT NULL,
+    LastName NVARCHAR(50) NOT NULL,
+    SalesQuota MONEY NULL,
+    Bonus MONEY NOT NULL,
+    CommissionPct SMALLMONEY NOT NULL
 );
 
 CREATE TABLE dbo.DimShipMethod (
-    ShipMethodKey int IDENTITY(1,1) PRIMARY KEY,
-    ShipMethodID_BK int NOT NULL UNIQUE,
-    Name nvarchar(50) NOT NULL,
-    ShipBase money NOT NULL,
-    ShipRate money NOT NULL
+    ShipMethodKey INT IDENTITY PRIMARY KEY,
+    ShipMethodID_BK INT NOT NULL UNIQUE,
+    Name NVARCHAR(50) NOT NULL,
+    ShipBase MONEY NOT NULL,
+    ShipRate MONEY NOT NULL
 );
 
 CREATE TABLE dbo.DimCreditCard (
-    CreditCardKey int IDENTITY(1,1) PRIMARY KEY,
-    CreditCardID_BK int NOT NULL UNIQUE,
-    CardType nvarchar(50) NOT NULL,
-    ExpMonth tinyint NOT NULL,
-    ExpYear smallint NOT NULL
+    CreditCardKey INT IDENTITY PRIMARY KEY,
+    CreditCardID_BK INT NOT NULL UNIQUE,
+    CardType NVARCHAR(50) NOT NULL,
+    ExpMonth TINYINT NOT NULL,
+    ExpYear SMALLINT NOT NULL
 );
 
 CREATE TABLE dbo.DimCurrencyRate (
-    CurrencyRateKey int IDENTITY(1,1) PRIMARY KEY,
-    CurrencyRateID_BK int NOT NULL UNIQUE,
-    CurrencyRateDate date NOT NULL,
-    FromCurrencyCode nchar(3) NOT NULL,
-    ToCurrencyCode nchar(3) NOT NULL,
-    AverageRate money NOT NULL,
-    EndOfDayRate money NOT NULL
+    CurrencyRateKey INT IDENTITY PRIMARY KEY,
+    CurrencyRateID_BK INT NOT NULL UNIQUE,
+    CurrencyRateDate DATE NOT NULL,
+    FromCurrencyCode NCHAR(3) NOT NULL,
+    ToCurrencyCode NCHAR(3) NOT NULL,
+    AverageRate MONEY NOT NULL,
+    EndOfDayRate MONEY NOT NULL
 );
 
 CREATE TABLE dbo.FactSalesOrderLine (
-    SalesOrderLineKey bigint IDENTITY(1,1) PRIMARY KEY,
-    SalesOrderID_Degenerate int NOT NULL,
-    SalesOrderDetailID_Degenerate int NOT NULL,
-    SalesOrderNumber_Degenerate nvarchar(25) NOT NULL,
-    ProductKey int NOT NULL,
-    CustomerKey int NOT NULL,
-    TerritoryKey int NOT NULL,
-    SalesPersonKey int NULL,
-    ShipMethodKey int NOT NULL,
-    CreditCardKey int NULL,
-    CurrencyRateKey int NULL,
-    OrderDateKey int NOT NULL,
-    DueDateKey int NOT NULL,
-    ShipDateKey int NULL,
-    OrderQty smallint NOT NULL,
-    UnitPrice money NOT NULL,
-    UnitPriceDiscount money NOT NULL,
-    LineTotal money NOT NULL,
+    SalesOrderLineKey BIGINT IDENTITY PRIMARY KEY,
+    SalesOrderID_Degenerate INT NOT NULL,
+    SalesOrderDetailID_Degenerate INT NOT NULL,
+    SalesOrderNumber_Degenerate NVARCHAR(25) NOT NULL,
+    ProductKey INT NOT NULL,
+    CustomerKey INT NOT NULL,
+    TerritoryKey INT NOT NULL,
+    SalesPersonKey INT NULL,
+    ShipMethodKey INT NOT NULL,
+    CreditCardKey INT NULL,
+    CurrencyRateKey INT NULL,
+    OrderDateKey INT NOT NULL,
+    DueDateKey INT NOT NULL,
+    ShipDateKey INT NULL,
+    OrderQty SMALLINT NOT NULL,
+    UnitPrice MONEY NOT NULL,
+    UnitPriceDiscount MONEY NOT NULL,
+    LineTotal MONEY NOT NULL,
     CONSTRAINT FK_Fact_Product FOREIGN KEY (ProductKey) REFERENCES dbo.DimProduct(ProductKey),
     CONSTRAINT FK_Fact_Customer FOREIGN KEY (CustomerKey) REFERENCES dbo.DimCustomer(CustomerKey),
     CONSTRAINT FK_Fact_Territory FOREIGN KEY (TerritoryKey) REFERENCES dbo.DimTerritory(TerritoryKey),

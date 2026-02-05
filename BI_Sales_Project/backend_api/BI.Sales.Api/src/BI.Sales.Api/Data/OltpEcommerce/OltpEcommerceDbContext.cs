@@ -1,12 +1,15 @@
 using BI.Sales.Api.Entities.OltpEcommerce;
+using BI.Sales.Api.Security;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace BI.Sales.Api.Data.OltpEcommerce;
 
-public class OltpEcommerceDbContext : IdentityDbContext
+public class OltpEcommerceDbContext : IdentityDbContext<ApplicationUser>
 {
-    public OltpEcommerceDbContext(DbContextOptions<OltpEcommerceDbContext> options) : base(options) { }
+    public OltpEcommerceDbContext(DbContextOptions<OltpEcommerceDbContext> options) : base(options)
+    {
+    }
 
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<SubCategory> SubCategories => Set<SubCategory>();
@@ -30,5 +33,14 @@ public class OltpEcommerceDbContext : IdentityDbContext
 
         builder.Entity<ShoppingCart>()
             .HasKey(c => c.CartId);
+
+        builder.Entity<ShoppingCart>()
+            .HasMany(c => c.Items)
+            .WithOne(i => i.Cart)
+            .HasForeignKey(i => i.CartId);
+
+        builder.Entity<Order>()
+            .HasIndex(o => o.OrderNumber)
+            .IsUnique();
     }
 }
