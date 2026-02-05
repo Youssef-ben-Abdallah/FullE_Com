@@ -4,59 +4,75 @@
   DTS:ExecutableType="SSIS.Package.2"
   DTS:PackageType="5">
   <DTS:Property DTS:Name="ObjectName">02_LoadFactSalesOrderLine</DTS:Property>
-  <DTS:Property DTS:Name="Description">Loads FactSalesOrderLine using an OLE DB Source + Lookup (existence check) with update via OLE DB Command and insert via OLE DB Destination.</DTS:Property>
+  <DTS:Property DTS:Name="Description">Loads FactSalesOrderLine at grain 1 row per order line using Sales.SalesOrderDetail joined to Sales.SalesOrderHeader, with lookup-driven upsert into the DWH fact table.</DTS:Property>
 
   <DTS:ConnectionManagers>
     <DTS:ConnectionManager DTS:Name="CN_AdventureWorksDW_Sales" DTS:CreationName="OLEDB" DTS:ObjectName="CN_AdventureWorksDW_Sales">
       <DTS:Property DTS:Name="ConnectionString">Data Source=.;Initial Catalog=AdventureWorksDW_Sales;Provider=MSOLEDBSQL;Integrated Security=SSPI;</DTS:Property>
-      <DTS:Property DTS:Name="Description">Primary DWH connection for source, lookup, update, and insert operations.</DTS:Property>
+      <DTS:Property DTS:Name="Description">DWH connection for staging, lookup, update, and insert operations.</DTS:Property>
+    </DTS:ConnectionManager>
+    <DTS:ConnectionManager DTS:Name="CN_AdventureWorks2019" DTS:CreationName="OLEDB" DTS:ObjectName="CN_AdventureWorks2019">
+      <DTS:Property DTS:Name="ConnectionString">Data Source=.;Initial Catalog=AdventureWorks2019;Provider=MSOLEDBSQL;Integrated Security=SSPI;</DTS:Property>
+      <DTS:Property DTS:Name="Description">OLTP source connection for SalesOrderDetail + SalesOrderHeader.</DTS:Property>
     </DTS:ConnectionManager>
   </DTS:ConnectionManagers>
 
   <DTS:Executables>
     <DTS:Executable DTS:ExecutableType="SSIS.Pipeline.3" DTS:ObjectName="DFT_LoadFactSalesOrderLine">
-      <DTS:Property DTS:Name="Description">OLE DB Source (staging) -> Lookup (FactSalesOrderLine) -> OLE DB Command (update existing) OR OLE DB Destination (insert new).</DTS:Property>
+      <DTS:Property DTS:Name="Description">Extract SalesOrderDetail + SalesOrderHeader, then Lookup FactSalesOrderLine for existence. Update matches, insert non-matches.</DTS:Property>
       <DTS:ObjectData>
         <pipeline:Pipeline>
           <pipeline:components>
-            <pipeline:component pipeline:name="OLE DB Source - Staging" pipeline:componentClassID="DTSAdapter.OleDbSource" pipeline:description="Reads staged fact rows from AdventureWorksDW_Sales.dbo.stg_FactSalesOrderLine">
+            <pipeline:component pipeline:name="OLE DB Source - SalesOrderDetailHeader" pipeline:componentClassID="DTSAdapter.OleDbSource" pipeline:description="Source query at grain 1 row per sales order line.">
               <pipeline:properties>
-                <pipeline:property pipeline:name="AccessMode">OpenRowset</pipeline:property>
-                <pipeline:property pipeline:name="OpenRowset">dbo.stg_FactSalesOrderLine</pipeline:property>
-                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+                <pipeline:property pipeline:name="AccessMode">SqlCommand</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand"><![CDATA[
+SELECT
+    sod.SalesOrderID,
+    sod.SalesOrderDetailID AS SalesOrderLineKey,
+    soh.SalesOrderNumber,
+    sod.ProductID,
+    soh.OrderDate,
+    soh.DueDate,
+    soh.ShipDate,
+    soh.CustomerID,
+    soh.SalesPersonID,
+    soh.TerritoryID,
+    soh.ShipMethodID,
+    sod.OrderQty,
+    sod.UnitPrice,
+    sod.UnitPriceDiscount,
+    sod.LineTotal
+FROM Sales.SalesOrderDetail AS sod
+INNER JOIN Sales.SalesOrderHeader AS soh
+    ON sod.SalesOrderID = soh.SalesOrderID;
+]]></pipeline:property>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorks2019</pipeline:property>
               </pipeline:properties>
               <pipeline:outputs>
                 <pipeline:output pipeline:name="OLE DB Source Output">
                   <pipeline:outputColumns>
+                    <pipeline:outputColumn pipeline:name="SalesOrderID" />
                     <pipeline:outputColumn pipeline:name="SalesOrderLineKey" />
                     <pipeline:outputColumn pipeline:name="SalesOrderNumber" />
-                    <pipeline:outputColumn pipeline:name="ProductKey" />
-                    <pipeline:outputColumn pipeline:name="OrderDateKey" />
-                    <pipeline:outputColumn pipeline:name="DueDateKey" />
-                    <pipeline:outputColumn pipeline:name="ShipDateKey" />
-                    <pipeline:outputColumn pipeline:name="CustomerKey" />
-                    <pipeline:outputColumn pipeline:name="PromotionKey" />
-                    <pipeline:outputColumn pipeline:name="CurrencyKey" />
-                    <pipeline:outputColumn pipeline:name="SalesTerritoryKey" />
-                    <pipeline:outputColumn pipeline:name="SalesOrderLineNumber" />
-                    <pipeline:outputColumn pipeline:name="OrderQuantity" />
+                    <pipeline:outputColumn pipeline:name="ProductID" />
+                    <pipeline:outputColumn pipeline:name="OrderDate" />
+                    <pipeline:outputColumn pipeline:name="DueDate" />
+                    <pipeline:outputColumn pipeline:name="ShipDate" />
+                    <pipeline:outputColumn pipeline:name="CustomerID" />
+                    <pipeline:outputColumn pipeline:name="SalesPersonID" />
+                    <pipeline:outputColumn pipeline:name="TerritoryID" />
+                    <pipeline:outputColumn pipeline:name="ShipMethodID" />
+                    <pipeline:outputColumn pipeline:name="OrderQty" />
                     <pipeline:outputColumn pipeline:name="UnitPrice" />
-                    <pipeline:outputColumn pipeline:name="ExtendedAmount" />
-                    <pipeline:outputColumn pipeline:name="UnitPriceDiscountPct" />
-                    <pipeline:outputColumn pipeline:name="DiscountAmount" />
-                    <pipeline:outputColumn pipeline:name="ProductStandardCost" />
-                    <pipeline:outputColumn pipeline:name="TotalProductCost" />
-                    <pipeline:outputColumn pipeline:name="SalesAmount" />
-                    <pipeline:outputColumn pipeline:name="TaxAmt" />
-                    <pipeline:outputColumn pipeline:name="Freight" />
-                    <pipeline:outputColumn pipeline:name="CarrierTrackingNumber" />
-                    <pipeline:outputColumn pipeline:name="CustomerPONumber" />
+                    <pipeline:outputColumn pipeline:name="UnitPriceDiscount" />
+                    <pipeline:outputColumn pipeline:name="LineTotal" />
                   </pipeline:outputColumns>
                 </pipeline:output>
               </pipeline:outputs>
             </pipeline:component>
 
-            <pipeline:component pipeline:name="Lookup - FactSalesOrderLine" pipeline:componentClassID="DTSTransform.Lookup" pipeline:description="Checks if SalesOrderLineKey already exists in dbo.FactSalesOrderLine">
+            <pipeline:component pipeline:name="Lookup - FactSalesOrderLine" pipeline:componentClassID="DTSTransform.Lookup" pipeline:description="Checks if SalesOrderLineKey already exists in dbo.FactSalesOrderLine.">
               <pipeline:properties>
                 <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
                 <pipeline:property pipeline:name="SqlCommand">SELECT SalesOrderLineKey FROM dbo.FactSalesOrderLine</pipeline:property>
@@ -78,7 +94,7 @@
             <pipeline:component pipeline:name="OLE DB Command - Update Existing" pipeline:componentClassID="DTSTransform.OleDbCommand" pipeline:description="Updates existing fact rows when the lookup finds a match.">
               <pipeline:properties>
                 <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
-                <pipeline:property pipeline:name="SqlCommand">UPDATE dbo.FactSalesOrderLine SET SalesOrderNumber = ?, ProductKey = ?, OrderDateKey = ?, DueDateKey = ?, ShipDateKey = ?, CustomerKey = ?, PromotionKey = ?, CurrencyKey = ?, SalesTerritoryKey = ?, SalesOrderLineNumber = ?, OrderQuantity = ?, UnitPrice = ?, ExtendedAmount = ?, UnitPriceDiscountPct = ?, DiscountAmount = ?, ProductStandardCost = ?, TotalProductCost = ?, SalesAmount = ?, TaxAmt = ?, Freight = ?, CarrierTrackingNumber = ?, CustomerPONumber = ? WHERE SalesOrderLineKey = ?</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand">UPDATE dbo.FactSalesOrderLine SET SalesOrderNumber = ?, ProductKey = ?, OrderDateKey = ?, DueDateKey = ?, ShipDateKey = ?, CustomerKey = ?, SalesPersonKey = ?, SalesTerritoryKey = ?, ShipMethodKey = ?, OrderQuantity = ?, UnitPrice = ?, UnitPriceDiscountPct = ?, SalesAmount = ? WHERE SalesOrderLineKey = ?</pipeline:property>
               </pipeline:properties>
             </pipeline:component>
 
@@ -92,7 +108,7 @@
           </pipeline:components>
 
           <pipeline:paths>
-            <pipeline:path pipeline:name="Source to Lookup" pipeline:startComponent="OLE DB Source - Staging" pipeline:startOutput="OLE DB Source Output" pipeline:endComponent="Lookup - FactSalesOrderLine" pipeline:endInput="Lookup Input" />
+            <pipeline:path pipeline:name="Source to Lookup" pipeline:startComponent="OLE DB Source - SalesOrderDetailHeader" pipeline:startOutput="OLE DB Source Output" pipeline:endComponent="Lookup - FactSalesOrderLine" pipeline:endInput="Lookup Input" />
             <pipeline:path pipeline:name="Lookup Match to Update" pipeline:startComponent="Lookup - FactSalesOrderLine" pipeline:startOutput="Lookup Match Output" pipeline:endComponent="OLE DB Command - Update Existing" pipeline:endInput="OLE DB Command Input" />
             <pipeline:path pipeline:name="Lookup No Match to Insert" pipeline:startComponent="Lookup - FactSalesOrderLine" pipeline:startOutput="Lookup No Match Output" pipeline:endComponent="OLE DB Destination - Insert New" pipeline:endInput="OLE DB Destination Input" />
           </pipeline:paths>

@@ -40,8 +40,8 @@ Use DTExec to run all packages end-to-end when you need a full refresh:
 
 ```bash
 "C:\Program Files\Microsoft SQL Server\160\DTS\Binn\DTExec.exe" /F "<repo>\etl_ssis\Packages\00_PrepareDW.dtsx" /CONNECTION "CN_AdventureWorksDW_Sales";"Data Source=.;Initial Catalog=AdventureWorksDW_Sales;Provider=MSOLEDBSQL;Integrated Security=SSPI;"
-"C:\Program Files\Microsoft SQL Server\160\DTS\Binn\DTExec.exe" /F "<repo>\etl_ssis\Packages\01_LoadDimensions.dtsx" /CONNECTION "CN_AdventureWorksDW_Sales";"Data Source=.;Initial Catalog=AdventureWorksDW_Sales;Provider=MSOLEDBSQL;Integrated Security=SSPI;"
-"C:\Program Files\Microsoft SQL Server\160\DTS\Binn\DTExec.exe" /F "<repo>\etl_ssis\Packages\02_LoadFactSalesOrderLine.dtsx" /CONNECTION "CN_AdventureWorksDW_Sales";"Data Source=.;Initial Catalog=AdventureWorksDW_Sales;Provider=MSOLEDBSQL;Integrated Security=SSPI;"
+"C:\Program Files\Microsoft SQL Server\160\DTS\Binn\DTExec.exe" /F "<repo>\etl_ssis\Packages\01_LoadDimensions.dtsx" /CONNECTION "CN_AdventureWorksDW_Sales";"Data Source=.;Initial Catalog=AdventureWorksDW_Sales;Provider=MSOLEDBSQL;Integrated Security=SSPI;" /CONNECTION "CN_AdventureWorks2019";"Data Source=.;Initial Catalog=AdventureWorks2019;Provider=MSOLEDBSQL;Integrated Security=SSPI;"
+"C:\Program Files\Microsoft SQL Server\160\DTS\Binn\DTExec.exe" /F "<repo>\etl_ssis\Packages\02_LoadFactSalesOrderLine.dtsx" /CONNECTION "CN_AdventureWorksDW_Sales";"Data Source=.;Initial Catalog=AdventureWorksDW_Sales;Provider=MSOLEDBSQL;Integrated Security=SSPI;" /CONNECTION "CN_AdventureWorks2019";"Data Source=.;Initial Catalog=AdventureWorks2019;Provider=MSOLEDBSQL;Integrated Security=SSPI;"
 "C:\Program Files\Microsoft SQL Server\160\DTS\Binn\DTExec.exe" /F "<repo>\etl_ssis\Packages\99_Reconciliation.dtsx" /CONNECTION "CN_AdventureWorksDW_Sales";"Data Source=.;Initial Catalog=AdventureWorksDW_Sales;Provider=MSOLEDBSQL;Integrated Security=SSPI;"
 ```
 
