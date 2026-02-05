@@ -1,5 +1,223 @@
 <?xml version="1.0"?>
-<DTS:Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts">
+<DTS:Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  xmlns:pipeline="www.microsoft.com/SqlServer/Dts/Pipeline"
+  DTS:ExecutableType="SSIS.Package.2"
+  DTS:PackageType="5">
   <DTS:Property DTS:Name="ObjectName">01_LoadDimensions</DTS:Property>
-  <DTS:Property DTS:Name="Description">Placeholder SSIS package</DTS:Property>
+  <DTS:Property DTS:Name="Description">Loads core dimensions (DimProduct, DimCustomer, DimTerritory, DimSalesPerson, DimShipMethod) from AdventureWorks2019 into AdventureWorksDW_Sales using lookup-driven upsert.</DTS:Property>
+
+  <DTS:ConnectionManagers>
+    <DTS:ConnectionManager DTS:Name="CN_AdventureWorksDW_Sales" DTS:CreationName="OLEDB" DTS:ObjectName="CN_AdventureWorksDW_Sales">
+      <DTS:Property DTS:Name="ConnectionString">Data Source=.;Initial Catalog=AdventureWorksDW_Sales;Provider=MSOLEDBSQL;Integrated Security=SSPI;</DTS:Property>
+      <DTS:Property DTS:Name="Description">DWH connection for lookup, update, and insert operations.</DTS:Property>
+    </DTS:ConnectionManager>
+    <DTS:ConnectionManager DTS:Name="CN_AdventureWorks2019" DTS:CreationName="OLEDB" DTS:ObjectName="CN_AdventureWorks2019">
+      <DTS:Property DTS:Name="ConnectionString">Data Source=.;Initial Catalog=AdventureWorks2019;Provider=MSOLEDBSQL;Integrated Security=SSPI;</DTS:Property>
+      <DTS:Property DTS:Name="Description">OLTP source connection for dimension extracts.</DTS:Property>
+    </DTS:ConnectionManager>
+  </DTS:ConnectionManagers>
+
+  <DTS:Executables>
+    <DTS:Executable DTS:ExecutableType="SSIS.Pipeline.3" DTS:ObjectName="DFT_DimProduct">
+      <DTS:Property DTS:Name="Description">DimProduct from Production.Product.</DTS:Property>
+      <DTS:ObjectData>
+        <pipeline:Pipeline>
+          <pipeline:components>
+            <pipeline:component pipeline:name="OLE DB Source - DimProduct" pipeline:componentClassID="DTSAdapter.OleDbSource" pipeline:description="Reads Production.Product">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="AccessMode">SqlCommand</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand"><![CDATA[
+SELECT ProductID, Name, ProductNumber, Color, Size, StandardCost, ListPrice
+FROM Production.Product;
+]]></pipeline:property>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorks2019</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+            <pipeline:component pipeline:name="Lookup - DimProduct" pipeline:componentClassID="DTSTransform.Lookup">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand">SELECT ProductKey FROM dbo.DimProduct</pipeline:property>
+                <pipeline:property pipeline:name="CacheMode">Full</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+            <pipeline:component pipeline:name="OLE DB Command - Update DimProduct" pipeline:componentClassID="DTSTransform.OleDbCommand">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand">UPDATE dbo.DimProduct SET ProductName = ?, ProductNumber = ?, Color = ?, Size = ?, StandardCost = ?, ListPrice = ? WHERE ProductKey = ?</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+            <pipeline:component pipeline:name="OLE DB Destination - Insert DimProduct" pipeline:componentClassID="DTSAdapter.OleDbDestination">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="AccessMode">OpenRowset</pipeline:property>
+                <pipeline:property pipeline:name="OpenRowset">dbo.DimProduct</pipeline:property>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+          </pipeline:components>
+        </pipeline:Pipeline>
+      </DTS:ObjectData>
+    </DTS:Executable>
+
+    <DTS:Executable DTS:ExecutableType="SSIS.Pipeline.3" DTS:ObjectName="DFT_DimCustomer">
+      <DTS:Property DTS:Name="Description">DimCustomer from Sales.Customer joined to Person.Person for names.</DTS:Property>
+      <DTS:ObjectData>
+        <pipeline:Pipeline>
+          <pipeline:components>
+            <pipeline:component pipeline:name="OLE DB Source - DimCustomer" pipeline:componentClassID="DTSAdapter.OleDbSource" pipeline:description="Reads Sales.Customer + Person.Person">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="AccessMode">SqlCommand</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand"><![CDATA[
+SELECT c.CustomerID, p.FirstName, p.LastName
+FROM Sales.Customer AS c
+INNER JOIN Person.Person AS p
+    ON c.PersonID = p.BusinessEntityID;
+]]></pipeline:property>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorks2019</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+            <pipeline:component pipeline:name="Lookup - DimCustomer" pipeline:componentClassID="DTSTransform.Lookup">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand">SELECT CustomerKey FROM dbo.DimCustomer</pipeline:property>
+                <pipeline:property pipeline:name="CacheMode">Full</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+            <pipeline:component pipeline:name="OLE DB Command - Update DimCustomer" pipeline:componentClassID="DTSTransform.OleDbCommand">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand">UPDATE dbo.DimCustomer SET FirstName = ?, LastName = ? WHERE CustomerKey = ?</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+            <pipeline:component pipeline:name="OLE DB Destination - Insert DimCustomer" pipeline:componentClassID="DTSAdapter.OleDbDestination">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="AccessMode">OpenRowset</pipeline:property>
+                <pipeline:property pipeline:name="OpenRowset">dbo.DimCustomer</pipeline:property>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+          </pipeline:components>
+        </pipeline:Pipeline>
+      </DTS:ObjectData>
+    </DTS:Executable>
+
+    <DTS:Executable DTS:ExecutableType="SSIS.Pipeline.3" DTS:ObjectName="DFT_DimTerritory">
+      <DTS:Property DTS:Name="Description">DimTerritory from Sales.SalesTerritory.</DTS:Property>
+      <DTS:ObjectData>
+        <pipeline:Pipeline>
+          <pipeline:components>
+            <pipeline:component pipeline:name="OLE DB Source - DimTerritory" pipeline:componentClassID="DTSAdapter.OleDbSource">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="AccessMode">SqlCommand</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand"><![CDATA[
+SELECT TerritoryID, Name, CountryRegionCode, GroupName
+FROM Sales.SalesTerritory;
+]]></pipeline:property>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorks2019</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+            <pipeline:component pipeline:name="Lookup - DimTerritory" pipeline:componentClassID="DTSTransform.Lookup">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand">SELECT SalesTerritoryKey FROM dbo.DimTerritory</pipeline:property>
+                <pipeline:property pipeline:name="CacheMode">Full</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+            <pipeline:component pipeline:name="OLE DB Command - Update DimTerritory" pipeline:componentClassID="DTSTransform.OleDbCommand">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand">UPDATE dbo.DimTerritory SET SalesTerritoryName = ?, CountryRegionCode = ?, SalesTerritoryGroup = ? WHERE SalesTerritoryKey = ?</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+            <pipeline:component pipeline:name="OLE DB Destination - Insert DimTerritory" pipeline:componentClassID="DTSAdapter.OleDbDestination">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="AccessMode">OpenRowset</pipeline:property>
+                <pipeline:property pipeline:name="OpenRowset">dbo.DimTerritory</pipeline:property>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+          </pipeline:components>
+        </pipeline:Pipeline>
+      </DTS:ObjectData>
+    </DTS:Executable>
+
+    <DTS:Executable DTS:ExecutableType="SSIS.Pipeline.3" DTS:ObjectName="DFT_DimSalesPerson">
+      <DTS:Property DTS:Name="Description">DimSalesPerson from Sales.SalesPerson.</DTS:Property>
+      <DTS:ObjectData>
+        <pipeline:Pipeline>
+          <pipeline:components>
+            <pipeline:component pipeline:name="OLE DB Source - DimSalesPerson" pipeline:componentClassID="DTSAdapter.OleDbSource">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="AccessMode">SqlCommand</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand"><![CDATA[
+SELECT BusinessEntityID AS SalesPersonID, Bonus, CommissionPct, SalesYTD, SalesLastYear
+FROM Sales.SalesPerson;
+]]></pipeline:property>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorks2019</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+            <pipeline:component pipeline:name="Lookup - DimSalesPerson" pipeline:componentClassID="DTSTransform.Lookup">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand">SELECT SalesPersonKey FROM dbo.DimSalesPerson</pipeline:property>
+                <pipeline:property pipeline:name="CacheMode">Full</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+            <pipeline:component pipeline:name="OLE DB Command - Update DimSalesPerson" pipeline:componentClassID="DTSTransform.OleDbCommand">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand">UPDATE dbo.DimSalesPerson SET Bonus = ?, CommissionPct = ?, SalesYTD = ?, SalesLastYear = ? WHERE SalesPersonKey = ?</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+            <pipeline:component pipeline:name="OLE DB Destination - Insert DimSalesPerson" pipeline:componentClassID="DTSAdapter.OleDbDestination">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="AccessMode">OpenRowset</pipeline:property>
+                <pipeline:property pipeline:name="OpenRowset">dbo.DimSalesPerson</pipeline:property>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+          </pipeline:components>
+        </pipeline:Pipeline>
+      </DTS:ObjectData>
+    </DTS:Executable>
+
+    <DTS:Executable DTS:ExecutableType="SSIS.Pipeline.3" DTS:ObjectName="DFT_DimShipMethod">
+      <DTS:Property DTS:Name="Description">DimShipMethod from Purchasing.ShipMethod.</DTS:Property>
+      <DTS:ObjectData>
+        <pipeline:Pipeline>
+          <pipeline:components>
+            <pipeline:component pipeline:name="OLE DB Source - DimShipMethod" pipeline:componentClassID="DTSAdapter.OleDbSource">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="AccessMode">SqlCommand</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand"><![CDATA[
+SELECT ShipMethodID, Name, ShipBase, ShipRate
+FROM Purchasing.ShipMethod;
+]]></pipeline:property>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorks2019</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+            <pipeline:component pipeline:name="Lookup - DimShipMethod" pipeline:componentClassID="DTSTransform.Lookup">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand">SELECT ShipMethodKey FROM dbo.DimShipMethod</pipeline:property>
+                <pipeline:property pipeline:name="CacheMode">Full</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+            <pipeline:component pipeline:name="OLE DB Command - Update DimShipMethod" pipeline:componentClassID="DTSTransform.OleDbCommand">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand">UPDATE dbo.DimShipMethod SET ShipMethodName = ?, ShipBase = ?, ShipRate = ? WHERE ShipMethodKey = ?</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+            <pipeline:component pipeline:name="OLE DB Destination - Insert DimShipMethod" pipeline:componentClassID="DTSAdapter.OleDbDestination">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="AccessMode">OpenRowset</pipeline:property>
+                <pipeline:property pipeline:name="OpenRowset">dbo.DimShipMethod</pipeline:property>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+          </pipeline:components>
+        </pipeline:Pipeline>
+      </DTS:ObjectData>
+    </DTS:Executable>
+  </DTS:Executables>
 </DTS:Executable>
