@@ -1,5 +1,103 @@
 <?xml version="1.0"?>
-<DTS:Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts">
+<DTS:Executable xmlns:DTS="www.microsoft.com/SqlServer/Dts"
+  xmlns:pipeline="www.microsoft.com/SqlServer/Dts/Pipeline"
+  DTS:ExecutableType="SSIS.Package.2"
+  DTS:PackageType="5">
   <DTS:Property DTS:Name="ObjectName">02_LoadFactSalesOrderLine</DTS:Property>
-  <DTS:Property DTS:Name="Description">Placeholder SSIS package</DTS:Property>
+  <DTS:Property DTS:Name="Description">Loads FactSalesOrderLine using an OLE DB Source + Lookup (existence check) with update via OLE DB Command and insert via OLE DB Destination.</DTS:Property>
+
+  <DTS:ConnectionManagers>
+    <DTS:ConnectionManager DTS:Name="CN_AdventureWorksDW_Sales" DTS:CreationName="OLEDB" DTS:ObjectName="CN_AdventureWorksDW_Sales">
+      <DTS:Property DTS:Name="ConnectionString">Data Source=.;Initial Catalog=AdventureWorksDW_Sales;Provider=MSOLEDBSQL;Integrated Security=SSPI;</DTS:Property>
+      <DTS:Property DTS:Name="Description">Primary DWH connection for source, lookup, update, and insert operations.</DTS:Property>
+    </DTS:ConnectionManager>
+  </DTS:ConnectionManagers>
+
+  <DTS:Executables>
+    <DTS:Executable DTS:ExecutableType="SSIS.Pipeline.3" DTS:ObjectName="DFT_LoadFactSalesOrderLine">
+      <DTS:Property DTS:Name="Description">OLE DB Source (staging) -> Lookup (FactSalesOrderLine) -> OLE DB Command (update existing) OR OLE DB Destination (insert new).</DTS:Property>
+      <DTS:ObjectData>
+        <pipeline:Pipeline>
+          <pipeline:components>
+            <pipeline:component pipeline:name="OLE DB Source - Staging" pipeline:componentClassID="DTSAdapter.OleDbSource" pipeline:description="Reads staged fact rows from AdventureWorksDW_Sales.dbo.stg_FactSalesOrderLine">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="AccessMode">OpenRowset</pipeline:property>
+                <pipeline:property pipeline:name="OpenRowset">dbo.stg_FactSalesOrderLine</pipeline:property>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+              </pipeline:properties>
+              <pipeline:outputs>
+                <pipeline:output pipeline:name="OLE DB Source Output">
+                  <pipeline:outputColumns>
+                    <pipeline:outputColumn pipeline:name="SalesOrderLineKey" />
+                    <pipeline:outputColumn pipeline:name="SalesOrderNumber" />
+                    <pipeline:outputColumn pipeline:name="ProductKey" />
+                    <pipeline:outputColumn pipeline:name="OrderDateKey" />
+                    <pipeline:outputColumn pipeline:name="DueDateKey" />
+                    <pipeline:outputColumn pipeline:name="ShipDateKey" />
+                    <pipeline:outputColumn pipeline:name="CustomerKey" />
+                    <pipeline:outputColumn pipeline:name="PromotionKey" />
+                    <pipeline:outputColumn pipeline:name="CurrencyKey" />
+                    <pipeline:outputColumn pipeline:name="SalesTerritoryKey" />
+                    <pipeline:outputColumn pipeline:name="SalesOrderLineNumber" />
+                    <pipeline:outputColumn pipeline:name="OrderQuantity" />
+                    <pipeline:outputColumn pipeline:name="UnitPrice" />
+                    <pipeline:outputColumn pipeline:name="ExtendedAmount" />
+                    <pipeline:outputColumn pipeline:name="UnitPriceDiscountPct" />
+                    <pipeline:outputColumn pipeline:name="DiscountAmount" />
+                    <pipeline:outputColumn pipeline:name="ProductStandardCost" />
+                    <pipeline:outputColumn pipeline:name="TotalProductCost" />
+                    <pipeline:outputColumn pipeline:name="SalesAmount" />
+                    <pipeline:outputColumn pipeline:name="TaxAmt" />
+                    <pipeline:outputColumn pipeline:name="Freight" />
+                    <pipeline:outputColumn pipeline:name="CarrierTrackingNumber" />
+                    <pipeline:outputColumn pipeline:name="CustomerPONumber" />
+                  </pipeline:outputColumns>
+                </pipeline:output>
+              </pipeline:outputs>
+            </pipeline:component>
+
+            <pipeline:component pipeline:name="Lookup - FactSalesOrderLine" pipeline:componentClassID="DTSTransform.Lookup" pipeline:description="Checks if SalesOrderLineKey already exists in dbo.FactSalesOrderLine">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand">SELECT SalesOrderLineKey FROM dbo.FactSalesOrderLine</pipeline:property>
+                <pipeline:property pipeline:name="CacheMode">Full</pipeline:property>
+              </pipeline:properties>
+              <pipeline:inputs>
+                <pipeline:input pipeline:name="Lookup Input">
+                  <pipeline:inputColumns>
+                    <pipeline:inputColumn pipeline:name="SalesOrderLineKey" />
+                  </pipeline:inputColumns>
+                </pipeline:input>
+              </pipeline:inputs>
+              <pipeline:outputs>
+                <pipeline:output pipeline:name="Lookup Match Output" />
+                <pipeline:output pipeline:name="Lookup No Match Output" />
+              </pipeline:outputs>
+            </pipeline:component>
+
+            <pipeline:component pipeline:name="OLE DB Command - Update Existing" pipeline:componentClassID="DTSTransform.OleDbCommand" pipeline:description="Updates existing fact rows when the lookup finds a match.">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+                <pipeline:property pipeline:name="SqlCommand">UPDATE dbo.FactSalesOrderLine SET SalesOrderNumber = ?, ProductKey = ?, OrderDateKey = ?, DueDateKey = ?, ShipDateKey = ?, CustomerKey = ?, PromotionKey = ?, CurrencyKey = ?, SalesTerritoryKey = ?, SalesOrderLineNumber = ?, OrderQuantity = ?, UnitPrice = ?, ExtendedAmount = ?, UnitPriceDiscountPct = ?, DiscountAmount = ?, ProductStandardCost = ?, TotalProductCost = ?, SalesAmount = ?, TaxAmt = ?, Freight = ?, CarrierTrackingNumber = ?, CustomerPONumber = ? WHERE SalesOrderLineKey = ?</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+
+            <pipeline:component pipeline:name="OLE DB Destination - Insert New" pipeline:componentClassID="DTSAdapter.OleDbDestination" pipeline:description="Inserts new fact rows when lookup has no match.">
+              <pipeline:properties>
+                <pipeline:property pipeline:name="AccessMode">OpenRowset</pipeline:property>
+                <pipeline:property pipeline:name="OpenRowset">dbo.FactSalesOrderLine</pipeline:property>
+                <pipeline:property pipeline:name="Connection">CN_AdventureWorksDW_Sales</pipeline:property>
+              </pipeline:properties>
+            </pipeline:component>
+          </pipeline:components>
+
+          <pipeline:paths>
+            <pipeline:path pipeline:name="Source to Lookup" pipeline:startComponent="OLE DB Source - Staging" pipeline:startOutput="OLE DB Source Output" pipeline:endComponent="Lookup - FactSalesOrderLine" pipeline:endInput="Lookup Input" />
+            <pipeline:path pipeline:name="Lookup Match to Update" pipeline:startComponent="Lookup - FactSalesOrderLine" pipeline:startOutput="Lookup Match Output" pipeline:endComponent="OLE DB Command - Update Existing" pipeline:endInput="OLE DB Command Input" />
+            <pipeline:path pipeline:name="Lookup No Match to Insert" pipeline:startComponent="Lookup - FactSalesOrderLine" pipeline:startOutput="Lookup No Match Output" pipeline:endComponent="OLE DB Destination - Insert New" pipeline:endInput="OLE DB Destination Input" />
+          </pipeline:paths>
+        </pipeline:Pipeline>
+      </DTS:ObjectData>
+    </DTS:Executable>
+  </DTS:Executables>
 </DTS:Executable>
